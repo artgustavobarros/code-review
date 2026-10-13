@@ -31,25 +31,40 @@ npx skills add artgustavobarros/skills --list
 ## 📦 Skills Disponíveis
 
 ### 1. [`bugpool`](./skills/bugpool/SKILL.md) — Revisão de PR multi-lente com triagem segura
-> **Comando:** `/bugpool [pr-number|pr-url] [--local] [--base <ref>] [--dry-run] [--push]` | **Versão:** `3.0.1`
+> **Comando:** `/bugpool [pr-number|pr-url] [--local] [--base <ref>] [--dry-run] [--push] [--no-ignore]` | **Versão:** `3.1.0`
 
 Revisa um Pull Request (ou a sua branch antes de abrir o PR), valida cada achado antes de reportar, tria threads de bots sem nunca tocar em conversas humanas e, opcionalmente, corrige o que é claro num worktree isolado.
 
-* **Pré-passe determinístico:** lint (só check, nunca `--fix`), typecheck e testes relacionados aos arquivos alterados, em segundos. O resultado vira evidência para as lentes.
+* **Pré-passe determinístico:** lint (só check, nunca `--fix`), typecheck e testes relacionados aos arquivos alterados, em segundos. Timeout de setup é reexecutado uma vez e vira `flaky`/`inconclusive`, não evidência falsa de regressão. Lockfiles, snapshots de migração e pastas de docs ficam fora do diff (`--no-ignore` desliga).
 * **Lentes core sempre ligadas:** `correctness-stack` e `security` rodam em todo review (`sonnet`). O router (`haiku`) só **adiciona** `qa` e `architecture`, nunca remove uma lente core. Achado CRITICAL não interrompe as outras lentes.
-* **Validação que tenta refutar:** achados MEDIUM+ são deduplicados e checados por um validador (`sonnet`; `opus` para segurança CRITICAL/HIGH). O que não tem prova em `arquivo:linha` é descartado.
+* **Validação que tenta refutar:** achados MEDIUM+ e LOW de categoria `bug` são deduplicados e checados por um validador (`sonnet`; `opus` para segurança CRITICAL/HIGH), que pode reproduzir o bug com um teste descartável fora do repo. O que não tem prova em `arquivo:linha` é descartado.
+* **Cobertura declarada:** cada lente diz o que leu e o que pulou, então "sem achados" não se confunde com "não olhei".
 * **Modos:** PR, `--local` (sem PR, revisa branch + working tree) e `--dry-run` (sem escrita no GitHub, sem commit, sem editar arquivos).
 * **Auto-fix seguro:** recusa working tree sujo, corrige num git worktree isolado, gate = typecheck + lint check + testes relacionados, um commit único e push só com `--push`. Nunca roda `git checkout --`/`reset` na sua árvore.
 * **Imunidade humana:** thread com qualquer comentário humano nunca é corrigida, respondida nem resolvida. O cabeçalho do bot só conta se estiver no início do comentário.
 * **Resumo sticky único** com veredito e score (`100 − Σ deduções`), postado por script (quebras de linha reais).
 * **Loop limitado:** até 2 rodadas extras após fixes, parando quando não surge achado novo MEDIUM+.
-* **Avaliação embutida:** `evals/` traz o harness (bugs semeados + Claude headless) usado para medir o skill.
+* **Avaliação embutida:** `evals/` traz o harness (bugs semeados, bugs reais de um intervalo, flake e comparação com o `/code-review` do Claude Code em modo headless) usado para medir o skill.
 
-| Cenário (seeds) | Revisor único (baseline) | bugpool 3.0.0 |
+Comparado ao `/code-review` padrão do Claude Code, nos mesmos cenários (uma execução cada; custo = estimativa de API do CLI):
+
+| Cenário | `/code-review` | bugpool 3.1.0 |
 | :--- | :--- | :--- |
-| dev (5) | 3/5 · US$0,19 | 5/5 · US$1,12 |
-| held-out (5) | 4/5 · US$0,17 | 5/5 · US$1,69 |
-| limpo (falsos positivos) | 0 | 0 |
+| dev (5 seeds) | 3/5 · US$0,10 | 5/5 · US$1,17 |
+| held-out (5 seeds) | 5/5 · US$0,15 | 5/5 · US$1,33 |
+| intervalo real (3 bugs) | 1/3 · US$0,20 | 2/3 · US$1,45 |
+| composição (2 seeds) | 2/2 · US$0,11 | 1/2 · US$0,75 |
+| limpo (falsos positivos) | 2 | 0 |
+
+Acha mais (13/15 contra 11/15) e erra menos, a ~8,5x o custo e ~6x o tempo.
+
+#### 3.1.0
+- Pré-passe: retry único só para timeout de setup/hook (`flaky`/`inconclusive`), contagem de testes, filtro de ruído no diff (`BUGPOOL_IGNORE`, `BUGPOOL_IGNORE_DIRS`, `--no-ignore`) e `scripts/diff.sh`.
+- Lentes: bug demonstrado vira categoria `bug` no arquivo de código com severidade pela consequência (sem teto por lente); lacuna de teste ou duplicação sem defeito fica no máximo LOW; checagem de composição (duas operações seguidas) na `correctness-stack`; bloco `COVERAGE` e saída em `$RUN/lens-<lente>.md`.
+- Router: scope drift "não aplicável" em intervalos com vários commits; formato de saída checado.
+- Validador: repro descartável em `$RUN/repro/` (nunca no repo, obrigatório em MEDIUM+ `bug` quando o perigo é HIGH+) e veredito `CONFIRMED (partly pre-existing)`.
+- Relatório: LOW não validado não desconta; o veredito nomeia cada MEDIUM+ aberto e marca os reproduzidos; mostra cobertura, ignorados, LOW descartados e o que não foi verificado.
+- Orquestração: diretório de execução único por rodada; as lentes nunca são puladas por diff pequeno; `git status` comparado antes e depois.
 
 #### 3.0.1
 - Gate do auto-fix e pré-passe tratam checks indisponíveis na stack (exit 127) como `skipped`, não como falha. Se nenhum check rodou, o gate passa como `PASS (unverified)` e o fix leva `unverified` na nota.

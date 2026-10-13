@@ -6,7 +6,14 @@ Usage: build-bench.py <manifest.json> <out_dir> [--skill <skill_dir>]
 Creates a detached git worktree at <out_dir>/<scenario> checked out at the
 manifest head, applies each seed (exact find/replace, must match once),
 commits locally, symlinks node_modules / .env* / the skill under test, and
-writes <out_dir>/<scenario>.diff (base...HEAD). Prints the worktree path.
+writes <out_dir>/<scenario>.diff (base...HEAD) and <out_dir>/<scenario>.base
+(the ref to review against). Prints the worktree path.
+
+A manifest may carry `setup` edits (same shape as seeds) that must stay OUT of
+the reviewed diff, e.g. a test harness that times out once. They are committed
+on top of `base`, the linear base..head commits are cherry-picked over them, and
+the setup commit becomes the review base.
+
 Never pushes and never touches the main working tree.
 """
 
@@ -39,22 +46,41 @@ def main():
     wt = out_dir / manifest["scenario"]
     if wt.exists():
         subprocess.run(["git", "worktree", "remove", "--force", str(wt)], cwd=repo)
-    git("worktree", "add", "--detach", str(wt), manifest["head"], cwd=repo)
+    setup = manifest.get("setup", [])
+    review_base = manifest["base"]
+    ident = ["-c", "user.name=bugpool-bench", "-c", "user.email=bench@localhost"]
 
-    for seed in manifest["seeds"]:
-        path = wt / seed["file"]
-        text = path.read_text()
-        count = text.count(seed["find"])
-        if count != 1:
-            subprocess.run(["git", "worktree", "remove", "--force", str(wt)], cwd=repo)
-            sys.exit(f"seed {seed['id']}: expected 1 match in {seed['file']}, found {count}")
-        path.write_text(text.replace(seed["find"], seed["replace"], 1))
+    def fail(msg):
+        subprocess.run(["git", "worktree", "remove", "--force", str(wt)], cwd=repo)
+        sys.exit(msg)
 
+    def apply(edits):
+        for seed in edits:
+            path = wt / seed["file"]
+            text = path.read_text()
+            count = text.count(seed["find"])
+            if count != 1:
+                fail(f"seed {seed['id']}: expected 1 match in {seed['file']}, found {count}")
+            path.write_text(text.replace(seed["find"], seed["replace"], 1))
+
+    if setup:
+        span = f"{manifest['base']}..{manifest['head']}"
+        if git("rev-list", "--merges", span, cwd=repo).strip():
+            sys.exit(f"setup needs a linear range without merges: {span}")
+        git("worktree", "add", "--detach", str(wt), manifest["base"], cwd=repo)
+        apply(setup)
+        git(*ident, "commit", "-qam", "bench setup (outside the reviewed diff)", cwd=wt)
+        review_base = git("rev-parse", "HEAD", cwd=wt).strip()
+        try:
+            git(*ident, "cherry-pick", span, cwd=wt)
+        except subprocess.CalledProcessError as e:
+            fail(f"cherry-pick of {span} over the setup failed: {e.stderr.strip()}")
+    else:
+        git("worktree", "add", "--detach", str(wt), manifest["head"], cwd=repo)
+
+    apply(manifest["seeds"])
     if manifest["seeds"]:
-        git(
-            "-c", "user.name=bugpool-bench", "-c", "user.email=bench@localhost",
-            "commit", "-qam", manifest["title"], cwd=wt,
-        )
+        git(*ident, "commit", "-qam", manifest["title"], cwd=wt)
 
     for name in ["node_modules", *[p.name for p in repo.glob(".env*") if p.name != ".env.example"]]:
         src, dst = repo / name, wt / name
@@ -75,8 +101,9 @@ def main():
             if not dst.exists():
                 dst.symlink_to(commands)
 
-    diff = git("diff", f"{manifest['base']}...HEAD", cwd=wt)
+    diff = git("diff", f"{review_base}...HEAD", cwd=wt)
     (out_dir / f"{manifest['scenario']}.diff").write_text(diff)
+    (out_dir / f"{manifest['scenario']}.base").write_text(review_base + "\n")
     print(wt)
 
 
