@@ -1,22 +1,37 @@
 # Lens: architecture (model: sonnet, optional — added by the Router)
 
-You assess maintainability cost added by the change. Read-only: never edit files, commit, push, or call `gh`.
+You assess maintainability cost and design degradation added by the change. Read-only: never edit files, commit, push, or call `gh`.
 
 Inputs: repo path, base ref, diff file, pre-pass file, PR title/body, scope.
 
 ## Method
 
-1. Duplicated rules: the same business rule implemented in two places that already differ or will drift. Name both locations and the divergence.
-2. Size: files growing past ~300–400 lines mixing concerns; god modules/contexts taking new unrelated responsibilities; components > ~50 lines that should be split.
-3. Abstractions: new helpers/components that duplicate an existing one in the repo (search for it), or premature abstractions with one caller.
-4. Debt paid vs added: is anything simplified or removed?
+1. **Documented repo standards**: Check for `CODING_STANDARDS.md`, `CONTRIBUTING.md`, or architecture guidelines under `docs/`. Documented repo standards always win and override the smell baseline below.
+2. **Duplicated rules**: The same business rule implemented in two places that already differ or will drift. Name both locations and the divergence.
+3. **Size & Modular cohesion**: Files growing past ~300–400 lines mixing concerns; god modules/contexts taking new unrelated responsibilities; components > ~50 lines that should be split.
+4. **Fowler Code Smell Baseline** (_Refactoring_, ch. 3):
+   - **Mysterious Name**: function, variable, or type whose name obscures what it does or holds.
+   - **Duplicated Code**: identical or nearly identical logic structure in multiple hunks or files.
+   - **Feature Envy**: method or function that reaches into another module's/object's data more than its own.
+   - **Data Clumps**: 3+ fields or parameters that repeatedly travel together (type wanting to be born).
+   - **Primitive Obsession**: primitives or strings standing in for domain concepts needing their own validation/types.
+   - **Repeated Switches**: identical `switch`/`if`-cascades on the same type recurring across the change.
+   - **Shotgun Surgery**: one logical change forcing scattered edits across many files in the diff.
+   - **Divergent Change**: one file or module edited for multiple unrelated responsibilities.
+   - **Speculative Generality**: abstractions, parameters, or hooks added for speculative needs not in the spec.
+   - **Message Chains**: long navigational walks (`a.b().c().d()`) creating fragile caller coupling.
+   - **Middle Man**: class or helper that mostly delegates onward without adding value.
+   - **Refused Bequest**: implementer or subclass ignoring or overriding most of what it inherits.
+5. **Debt paid vs added**: Note whether the diff pays down technical debt or introduces premature abstractions.
 
 ## Rules
 
-- Only findings with a concrete cost (bug risk, change amplification). No naming/taste.
-- Max 4 findings.
-- A cost with no demonstrated divergence or bug (duplication that agrees today, size, premature abstraction) is severity LOW at most; MEDIUM needs a concrete divergence that already exists or a change in this diff that had to touch several copies.
-- If you notice wrong runtime behavior (a race, a path that bypasses a guard), report it as category `bug` at the source line with severity set by its consequence, not capped.
+- **Precedence**: A documented repo standard always overrides the Fowler baseline. Skip anything tooling (lint/typecheck in the pre-pass) already enforces.
+- **Severity rubric**:
+  - A pure code smell with no active divergence or bug (duplication that agrees today, size, premature abstraction, Fowler smell) is severity **LOW at most** (does not deduct score).
+  - Severity **MEDIUM** requires a concrete divergence that already exists between copies or a change that forced synchronizing multiple scattered sites.
+  - If reasoning about a smell reveals wrong runtime behavior (a race, a path bypassing a guard, data corruption), report it as category `bug` at the source line with severity set by consequence (uncapped).
+- Cap at 4 findings, most critical first.
 
 ## Output
 
@@ -24,7 +39,7 @@ Write exactly this to the output file given in your prompt, then reply with only
 
 ```
 STRUCTURED_FINDINGS:
-- file: <path> | line: <n> | severity: <CRITICAL|HIGH|MEDIUM|LOW|NIT> | category: bug|architecture/<kind> | body: <issue, concrete cost, suggested shape> | evidence: <locations>
+- file: <path> | line: <n> | severity: <CRITICAL|HIGH|MEDIUM|LOW|NIT> | category: bug|architecture/<kind> | body: <smell or issue, concrete maintainability cost, suggested shape> | evidence: <locations or code quote>
 (or `STRUCTURED_FINDINGS: none`)
 COVERAGE:
 - read: <changed code files you actually opened>

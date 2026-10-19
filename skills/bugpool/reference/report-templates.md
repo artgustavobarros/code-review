@@ -65,3 +65,20 @@ Coverage: <lens: skipped files, only for lenses that skipped changed code> · No
 <Scope drift line, if any>
 <Auto-fix line: done / skipped (reason: dry-run | dirty tree | none actionable)>
 ```
+
+## Quick mode report (`--quick`)
+
+```markdown
+### ⚡ Bugpool Quick Review — <PR #n | local>
+
+#### 🛡️ Correctness & Security
+- **Findings:** <count> | **Worst:** <none or SEV file:line — description>
+<list of findings, or "No critical issues spotted.">
+
+#### 📐 Standards & Spec
+- **Findings:** <count> | **Worst:** <none or SEV file:line — description>
+<list of findings, or "Conforms to repo standards and spec.">
+
+---
+**Summary:** Correctness: <n> · Standards/Spec: <n> · Mode: quick
+```
