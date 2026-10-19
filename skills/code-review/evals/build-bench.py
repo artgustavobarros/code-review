@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build a bugpool benchmark worktree from a scenario manifest.
+"""Build a code-review benchmark worktree from a scenario manifest.
 
 Usage: build-bench.py <manifest.json> <out_dir> [--skill <skill_dir>]
 
@@ -48,7 +48,7 @@ def main():
         subprocess.run(["git", "worktree", "remove", "--force", str(wt)], cwd=repo)
     setup = manifest.get("setup", [])
     review_base = manifest["base"]
-    ident = ["-c", "user.name=bugpool-bench", "-c", "user.email=bench@localhost"]
+    ident = ["-c", "user.name=code-review-bench", "-c", "user.email=bench@localhost"]
 
     def fail(msg):
         subprocess.run(["git", "worktree", "remove", "--force", str(wt)], cwd=repo)
@@ -88,16 +88,16 @@ def main():
             dst.symlink_to(src)
 
     if skill_dir:
-        for rel in [".claude/skills/bugpool", ".agents/skills/bugpool"]:
+        for rel in [".claude/skills/code-review", ".agents/skills/code-review"]:
             dst = wt / rel
             dst.parent.mkdir(parents=True, exist_ok=True)
             if dst.is_symlink() or dst.exists():
                 subprocess.run(["rm", "-rf", str(dst)], check=True)
             dst.symlink_to(skill_dir)
-        commands = repo / ".claude/commands/bugpool.md"
+        commands = repo / ".claude/commands/code-review.md"
         if commands.exists():
             (wt / ".claude/commands").mkdir(parents=True, exist_ok=True)
-            dst = wt / ".claude/commands/bugpool.md"
+            dst = wt / ".claude/commands/code-review.md"
             if not dst.exists():
                 dst.symlink_to(commands)
 

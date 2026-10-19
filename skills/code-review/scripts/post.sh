@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Post bugpool comments. Bodies always come from a file (real line breaks) and always
+# Post code-review comments. Bodies always come from a file (real line breaks) and always
 # start with the bot header. Never called in --dry-run.
 #
 #   post.sh reply  <pr_number> <comment_id> <body_file>   reply inside a review thread
@@ -8,7 +8,7 @@
 set -euo pipefail
 
 HEADER=$'> [!NOTE]\n> 🤖 Automated comment by **Bugpool** — not written by a human'
-MARKER='<!-- bugpool-summary -->'
+MARKER='<!-- code-review-summary -->'
 
 with_header() {
   local src="$1" out

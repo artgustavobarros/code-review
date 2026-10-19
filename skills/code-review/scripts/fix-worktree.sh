@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Isolated auto-fix workspace for bugpool. Never touches the user's working tree.
+# Isolated auto-fix workspace for code-review. Never touches the user's working tree.
 #
 #   fix-worktree.sh check-clean                 exit 1 if the user's tree has uncommitted changes
-#   fix-worktree.sh create <sha>                worktree + branch bugpool/fix-<short>; prints path
+#   fix-worktree.sh create <sha>                worktree + branch code-review/fix-<short>; prints path
 #   fix-worktree.sh gate <wt> <files...>        typecheck + lint check + related tests (no fixes)
 #   fix-worktree.sh revert <wt> <files...>      discard edits INSIDE the fix worktree only
 #   fix-worktree.sh commit <wt> <message>       one commit with all tracked edits; prints sha
@@ -15,13 +15,13 @@ here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$here/lib.sh"
 
 repo="$(git rev-parse --show-toplevel)"
-prefix="${TMPDIR:-/tmp}/bugpool-fix-"
+prefix="${TMPDIR:-/tmp}/code-review-fix-"
 
 guard_wt() {
   local wt
   wt="$(cd "$1" && pwd)"
   if [[ "$wt" != "$prefix"* || "$wt" == "$repo" ]]; then
-    echo "refusing: $wt is not a bugpool fix worktree" >&2
+    echo "refusing: $wt is not a code-review fix worktree" >&2
     exit 2
   fi
   echo "$wt"
@@ -54,7 +54,7 @@ case "$cmd" in
     short="${sha:0:7}"
     wt="$prefix$short"
     [[ -e "$wt" ]] && git -C "$repo" worktree remove --force "$wt"
-    git -C "$repo" worktree add -q -B "bugpool/fix-$short" "$wt" "$sha"
+    git -C "$repo" worktree add -q -B "code-review/fix-$short" "$wt" "$sha"
     link_deps "$repo" "$wt"
     echo "$wt"
     ;;

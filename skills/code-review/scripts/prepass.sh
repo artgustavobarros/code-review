@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Deterministic, NON-MUTATING pre-pass for bugpool. Run from the repository root.
+# Deterministic, NON-MUTATING pre-pass for code-review. Run from the repository root.
 #
 #   prepass.sh <base> [--local] [--no-ignore]
 #

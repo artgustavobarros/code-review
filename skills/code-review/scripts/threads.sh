@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Review threads for bugpool triage. Run inside the repository.
+# Review threads for code-review triage. Run inside the repository.
 #
 #   threads.sh list <pr_number>       unresolved threads as JSON lines, each with "human": true|false
 #   threads.sh resolve <thread_id>    resolve one thread (never call for human threads)
 #
 # A comment is automated only if its author is a GitHub Bot / *[bot] / known review bot,
-# or its body STARTS WITH the bugpool bot header. Any other comment makes the thread human.
+# or its body STARTS WITH the code-review bot header. Any other comment makes the thread human.
 set -euo pipefail
 
 cmd="${1:?command required: list|resolve}"

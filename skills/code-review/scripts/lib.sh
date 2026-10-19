@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Shared helpers for bugpool scripts. Source, don't execute.
+# Shared helpers for code-review scripts. Source, don't execute.
 # All checks are NON-MUTATING: never pass --fix / --write / --apply to any tool.
 
 # has_dep <name>: true if package.json lists <name> in any dependency field.

@@ -12,26 +12,26 @@ Você pode instalar qualquer skill diretamente em qualquer projeto com um único
 
 ### Instalar no projeto atual:
 ```bash
-npx skills add artgustavobarros/skills --skill bugpool
+npx skills add artgustavobarros/code-review --skill code-review
 ```
-*(Ou pelo link completo: `npx skills add https://github.com/artgustavobarros/skills --skill bugpool`)*
+*(Ou pelo link completo: `npx skills add https://github.com/artgustavobarros/code-review --skill code-review`)*
 
 ### Instalar globalmente na sua máquina (disponível em todos os projetos):
 ```bash
-npx skills add artgustavobarros/skills --skill bugpool -g
+npx skills add artgustavobarros/code-review --skill code-review -g
 ```
 
 ### Listar todas as skills disponíveis neste repositório:
 ```bash
-npx skills add artgustavobarros/skills --list
+npx skills add artgustavobarros/code-review --list
 ```
 
 ---
 
 ## 📦 Skills Disponíveis
 
-### 1. [`bugpool`](./skills/bugpool/SKILL.md) — Revisão de PR multi-lente com triagem segura
-> **Comando:** `/bugpool [pr-number|pr-url] [--local] [--base <ref>] [--dry-run] [--push] [--no-ignore] [--quick] [--spec <ref>]` | **Versão:** `3.3.0`
+### 1. [`code-review`](./skills/code-review/SKILL.md) — Revisão de PR multi-lente com triagem segura
+> **Comando:** `/code-review [pr-number|pr-url] [--local] [--base <ref>] [--dry-run] [--push] [--no-ignore] [--quick] [--spec <ref>]` | **Versão:** `3.4.0`
 
 Revisa um Pull Request (ou a sua branch antes de abrir o PR), valida cada achado antes de reportar, tria threads de bots sem nunca tocar em conversas humanas e, opcionalmente, corrige o que é claro num worktree isolado.
 
@@ -86,7 +86,7 @@ Acha mais (13/15 contra 11/15) e erra menos, a ~8,5x o custo e ~6x o tempo (no m
 - Gate do auto-fix e pré-passe tratam checks indisponíveis na stack (exit 127) como `skipped`, não como falha. Se nenhum check rodou, o gate passa como `PASS (unverified)` e o fix leva `unverified` na nota.
 
 #### ⚠️ Breaking changes na 3.0.0
-- `commands/bugpool.md` foi removido: o próprio skill expõe `/bugpool` (o `install.sh` apaga o arquivo antigo; com `npx skills`, apague `.claude/commands/bugpool.md`).
+- O próprio skill expõe `/code-review`.
 - Auto-fix não roda mais com working tree sujo e não dá push sem `--push`.
 - Achados novos aparecem no resumo sticky e no terminal; só threads existentes recebem respostas.
 
@@ -101,15 +101,15 @@ Acha mais (13/15 contra 11/15) e erra menos, a ~8,5x o custo e ~6x o tempo (no m
 
 ### Cópia manual:
 ```bash
-cp -r skills/bugpool /caminho/para/projeto/.agents/skills/
-ln -s ../../.agents/skills/bugpool /caminho/para/projeto/.claude/skills/bugpool
+cp -r skills/code-review /caminho/para/projeto/.agents/skills/
+ln -s ../../.agents/skills/code-review /caminho/para/projeto/.claude/skills/code-review
 ```
 
 ---
 
 ## 🙏 Créditos
 
-O `bugpool` é derivado e adaptado de:
+O `code-review` é derivado e adaptado de:
 - [`qa-swarm`](https://github.com/pauldambra/dotfiles/tree/main/ai/skills/qa-swarm) e [`review-triage`](https://github.com/pauldambra/dotfiles/tree/main/ai/skills/review-triage), de Paul D'Ambra: router com lentes, achados estruturados, resumo sticky, imunidade humana.
 - [`yooh-digital/ai-workflow`](https://github.com/yooh-digital/ai-workflow): revisão em duas passadas, fricção construtiva, scope drift, rubrica SIZE.
 

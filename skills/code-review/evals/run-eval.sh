@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
-# Run one bugpool evaluation scenario with a fresh headless Claude ("Claude B").
+# Run one code-review evaluation scenario with a fresh headless Claude ("Claude B").
 #
 # Usage: run-eval.sh <scenario> [--baseline|--code-review] [--label <name>] [--keep]
 #   <scenario>  a manifest name in manifests/ (dev, clean, heldout, range, composition, flaky)
-#   --baseline     run one generic single-reviewer prompt instead of /bugpool
-#   --code-review  run Claude Code's built-in /code-review (default level) instead of /bugpool.
+#   --baseline     run one generic single-reviewer prompt instead of /code-review
+#   --code-review  run Claude Code's built-in /code-review (default level) instead of /code-review.
 #                  The bench changes are left staged on top of the review base, since
 #                  /code-review reviews the current diff.
 #   --label     suffix for the run file (default: skill version or "baseline")
 #   --keep      keep the benchmark worktree after the run
 #
-# Env: BUGPOOL_EVAL_DIR (default $TMPDIR/bugpool-eval), BUGPOOL_EVAL_BUDGET (USD, default 3),
+# Env: BUGPOOL_EVAL_DIR (default $TMPDIR/code-review-eval), BUGPOOL_EVAL_BUDGET (USD, default 3),
 #      BUGPOOL_EVAL_MODEL (orchestrator model, default sonnet),
 #      BUGPOOL_EVAL_SKILL (skill dir under test, default: this skill; e.g. a copy of the
 #      previous version to record "before" numbers with the current manifests).
@@ -39,7 +39,7 @@ here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 skill_dir="${BUGPOOL_EVAL_SKILL:-$(dirname "$here")}"
 repo="$(git -C "$here" rev-parse --show-toplevel)"
 manifest="$here/manifests/$scenario.json"
-out_dir="${BUGPOOL_EVAL_DIR:-${TMPDIR:-/tmp}/bugpool-eval}"
+out_dir="${BUGPOOL_EVAL_DIR:-${TMPDIR:-/tmp}/code-review-eval}"
 budget="${BUGPOOL_EVAL_BUDGET:-3}"
 model="${BUGPOOL_EVAL_MODEL:-sonnet}"
 [[ -f "$manifest" ]] || { echo "no manifest: $manifest" >&2; exit 2; }
@@ -65,7 +65,7 @@ if [[ $mode == code-review ]]; then
 elif [[ $mode == baseline ]]; then
   prompt="You are a senior code reviewer. Review the changes in \`git diff $base...HEAD\` (PR title: \"$title\") for real bugs: security, correctness, reliability, React/Next.js pitfalls, and files unrelated to the stated goal. Read surrounding code to verify each finding; report only findings you can defend with file:line evidence. Do not modify files. Output only a STRUCTURED_FINDINGS list: - file: <path> | line: <n> | severity: <CRITICAL|HIGH|MEDIUM|LOW|NIT> | category: <...> | body: <issue + fix + why>"
 else
-  prompt="/bugpool --local --base $base --dry-run"
+  prompt="/code-review --local --base $base --dry-run"
 fi
 
 stamp="$(date +%Y%m%d-%H%M%S)"

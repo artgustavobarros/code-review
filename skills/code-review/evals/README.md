@@ -1,7 +1,7 @@
 # Bugpool evaluation harness
 
 Measures the skill the way a user runs it: a fresh headless Claude Code session invokes
-`/bugpool --local --base <base> --dry-run` inside a throwaway git worktree with seeded bugs,
+`/code-review --local --base <base> --dry-run` inside a throwaway git worktree with seeded bugs,
 and reports cost and wall time (subagents included). Nothing is pushed, committed or posted.
 
 ## Files
@@ -15,7 +15,7 @@ and reports cost and wall time (subagents included). Nothing is pushed, committe
   `claude -p` (orchestrator `sonnet`, budget cap `BUGPOOL_EVAL_BUDGET`, default $3) with
   `git push/commit/reset/checkout`, `gh`, `Edit` and `Write` disallowed. `--baseline` runs one
   generic single-reviewer prompt instead; `--code-review` runs Claude Code's built-in `/code-review`
-  (default level) with the scenario changes staged on the review base, the reference bugpool has to
+  (default level) with the scenario changes staged on the review base, the reference code-review has to
   beat. Output JSON goes to `runs/` (git-ignored).
   Any manifest name works as `<scenario>`.
 - `score.py <manifest> <run.json>` — scoring aid run after each eval: lists the expected items
@@ -77,7 +77,7 @@ validator's job.
 
 ## Reference results (3.1.0 vs Claude Code `/code-review`, private Next.js + Drizzle repo, 2026-10-13)
 
-| Scenario | `/code-review` (default level) | bugpool 3.1.0 |
+| Scenario | `/code-review` (default level) | code-review 3.1.0 |
 | :--- | :--- | :--- |
 | dev (5 seeds) | 3/5 · $0.10 · 23 s | 5/5 · $1.17 · 141 s |
 | held-out (5 seeds) | 5/5 · $0.15 · 36 s | 5/5 · $1.33 · 159 s |

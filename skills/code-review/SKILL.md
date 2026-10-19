@@ -1,23 +1,24 @@
 ---
-name: bugpool
+name: code-review
 description: >
   Multi-lens PR review and triage. Runs a deterministic pre-pass (lint check, typecheck,
   related tests), always-on correctness and security lenses plus router-selected extras,
   framework invariants check, empirical hands-on verification (mandatory PoC for HIGH/CRITICAL),
   historical intent audit (git log), refute-first validation, and human-safe triage.
-  Supports PR mode, --local (no PR needed) and --dry-run.
+  Supports PR mode, --local (no PR needed) and --dry-run. Use for /code-review, PR review,
+  review triage, or reviewing a branch before opening a PR.
 version: "3.4.0"
 argument-hint: "[pr-number|pr-url] [--local] [--base <ref>] [--dry-run] [--push] [--no-ignore] [--quick] [--spec <ref>]"
 ---
 
-# Bugpool
+# Code Review
 
 `<skill>` below means this skill's base directory. Lens prompts live in `<skill>/reference/lenses/`, report formats in `<skill>/reference/report-templates.md`, helpers in `<skill>/scripts/`.
 
 ## Invocation
 
 ```
-/bugpool [<pr number|url>] [--local] [--base <ref>] [--dry-run] [--push] [--no-ignore] [--quick] [--spec <ref>]
+/code-review [<pr number|url>] [--local] [--base <ref>] [--dry-run] [--push] [--no-ignore] [--quick] [--spec <ref>]
 ```
 
 | Flag | Effect |
@@ -69,7 +70,7 @@ Copy this checklist and tick it as you go:
 
 - **PR mode**: `gh pr view <pr> --json number,title,body,state,baseRefName,headRefName,headRefOid`. If MERGED/CLOSED and not `--dry-run`, stop. `git fetch origin <baseRefName> <headRefName>`; base = `origin/<baseRefName>`. If `git rev-parse HEAD` ≠ `headRefOid`, run `<skill>/scripts/fix-worktree.sh create <headRefOid>` and use that path as the review root for every later step.
 - **Local mode**: review root = repo root, base = `--base` value; title/body = branch name + `git log --format=%s <base>..HEAD`. More than one commit in `<base>..HEAD` → **multi-commit range** (tell the Router; the title/body is only a commit log).
-- Create a fresh run directory: `RUN=$(mktemp -d "${TMPDIR:-/tmp}/bugpool-$(git rev-parse --short HEAD)-XXXX")`. Never reuse an earlier run's directory or its files (stale `lens-*.md` would be read as this run's output). Write the filtered diff once: `bash <skill>/scripts/diff.sh <base> [--local] [--no-ignore] > $RUN/diff`. Note changed line count.
+- Create a fresh run directory: `RUN=$(mktemp -d "${TMPDIR:-/tmp}/code-review-$(git rev-parse --short HEAD)-XXXX")`. Never reuse an earlier run's directory or its files (stale `lens-*.md` would be read as this run's output). Write the filtered diff once: `bash <skill>/scripts/diff.sh <base> [--local] [--no-ignore] > $RUN/diff`. Note changed line count.
 - **Spec discovery**:
   1. If `--spec <arg>` was passed: write it (or its content if a file path) to `$RUN/spec.txt`.
   2. If PR mode: inspect PR body and any referenced issues (`#123`, `Closes #45`) via `gh issue view <id> --json title,body`; write to `$RUN/spec.txt`.
@@ -113,7 +114,7 @@ Each lens writes `STRUCTURED_FINDINGS` and `COVERAGE` to its output file and rep
 1. In the user's checkout: `<skill>/scripts/fix-worktree.sh check-clean`. Dirty → skip auto-fix and say so.
 2. Reuse the review worktree, or `<skill>/scripts/fix-worktree.sh create HEAD`.
 3. Spawn one Agent (`model: sonnet`) with `<skill>/reference/lenses/fixer.md`, the worktree path, and the ACTIONABLE list.
-4. If anything is FIXED: `fix-worktree.sh commit <wt> "fix(review): bugpool round <n>"`. With `--push`: `fix-worktree.sh push <wt> <headRefName>`, then reply on fixed bot threads with the SHA and resolve them. NOT_FIXED → AMBIGUOUS with the gate error.
+4. If anything is FIXED: `fix-worktree.sh commit <wt> "fix(review): code-review round <n>"`. With `--push`: `fix-worktree.sh push <wt> <headRefName>`, then reply on fixed bot threads with the SHA and resolve them. NOT_FIXED → AMBIGUOUS with the gate error.
 5. **Bounded loop**: re-run the `correctness-stack` lens on `git diff <old head>..<fix sha>` and validate. Repeat at most 2 extra rounds; stop as soon as a round adds no new validated MEDIUM+ finding.
 6. `fix-worktree.sh remove <wt>` unless the user wants to inspect it (the branch is kept).
 

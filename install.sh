@@ -16,22 +16,16 @@ echo "📦 Instalando skills públicas em: $TARGET_DIR"
 
 mkdir -p "$TARGET_DIR/.agents/skills" "$TARGET_DIR/.claude/skills"
 
-# Bugpool
-echo "  -> Instalando bugpool..."
-rm -rf "$TARGET_DIR/.agents/skills/bugpool"
-cp -r "$SOURCE_DIR/skills/bugpool" "$TARGET_DIR/.agents/skills/"
-CLAUDE_LINK="$TARGET_DIR/.claude/skills/bugpool"
+# Code Review
+echo "  -> Instalando code-review..."
+rm -rf "$TARGET_DIR/.agents/skills/bugpool" "$TARGET_DIR/.claude/skills/bugpool"
+rm -rf "$TARGET_DIR/.agents/skills/code-review"
+cp -r "$SOURCE_DIR/skills/code-review" "$TARGET_DIR/.agents/skills/"
+CLAUDE_LINK="$TARGET_DIR/.claude/skills/code-review"
 if [ -d "$CLAUDE_LINK" ] && [ ! -L "$CLAUDE_LINK" ]; then
-  rm -rf "$CLAUDE_LINK"   # cópia real antiga: substitui pelo symlink
+  rm -rf "$CLAUDE_LINK"
 fi
-ln -sfn "../../.agents/skills/bugpool" "$CLAUDE_LINK"
-
-# Remove o slash command legado da 1.x (o skill já expõe /bugpool)
-LEGACY_COMMAND="$TARGET_DIR/.claude/commands/bugpool.md"
-if [ -f "$LEGACY_COMMAND" ]; then
-  echo "  -> Removendo command legado da 1.x: .claude/commands/bugpool.md"
-  rm -f "$LEGACY_COMMAND"
-fi
+ln -sfn "../../.agents/skills/code-review" "$CLAUDE_LINK"
 
 echo "✅ Instalação concluída com sucesso!"
-echo "   Disponível via slash command: /bugpool"
+echo "   Disponível via slash command: /code-review"

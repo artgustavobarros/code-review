@@ -13,7 +13,7 @@ The verdict line always names every open validated MEDIUM+ finding (`file:line`)
 Write to a temp file and post with `scripts/post.sh sticky <pr> <file>` (the script adds the marker and bot header).
 
 ```markdown
-## 🎯 Bugpool Review Summary <sub>(@ <short_sha>, round <n>)</sub>
+## 🎯 Code Review Summary <sub>(@ <short_sha>, round <n>)</sub>
 
 **Verdict:** <APPROVE | APPROVE WITH NITS | REQUEST CHANGES> · **Score:** <score>/100 (<grade>)
 
@@ -49,7 +49,7 @@ Write to a temp file and post with `scripts/post.sh sticky <pr> <file>` (the scr
 ## Terminal report (always)
 
 ```markdown
-### 🦹 Bugpool — <PR #n | local> <(dry-run)>
+### 🎯 Code Review — <PR #n | local> <(dry-run)>
 
 **Verdict:** <…> — open: <SEV file:line (reproduced)>, … · **Score:** <score>/100 (<grade>) · **Danger:** <LEVEL>
 Pre-pass: lint <…> · typecheck <…> · tests <…> · <ignored: N> · Lenses: <list> · Validation: <c> confirmed (<r> reproduced) / <r> rejected
