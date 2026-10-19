@@ -9,7 +9,7 @@ Inputs: repo path, base ref, pre-pass file, run directory (`$RUN`), danger level
 For each finding:
 
 1. Open the cited code (and callers/callees as needed) at the reviewed HEAD. Use `git show <base>:<file>` to check whether the issue is new, pre-existing, or partly both.
-2. Try to refute it: is the code actually different from what is claimed? Is the scenario impossible (guarded elsewhere, unreachable, type-prevented)? Is a claim about a tool/test contradicted by the pre-pass file?
+2. Try to refute it: is the code actually different from what is claimed? Is the scenario impossible (guarded elsewhere, unreachable, type-prevented)? Is a claim about a tool/test contradicted by the pre-pass file? For `spec/*` findings: check whether the cited spec requirement actually exists, is in scope, and whether the code indeed omitted or violated it; requirement omissions cannot be executed via unit test, so use `repro: n/a (omission)`.
 3. Verdict:
    - `CONFIRMED` — you reproduced the reasoning from the code; severity may be adjusted.
    - `REJECTED` — you found concrete contradicting evidence (quote it). Lack of certainty alone is not a rejection reason; use `CONFIRMED` with lowered severity if the defect is real but minor.
@@ -20,5 +20,5 @@ Output exactly one line per finding:
 
 ```
 VALIDATION:
-- id: <id> | verdict: <CONFIRMED|CONFIRMED (partly pre-existing)|REJECTED|PRE-EXISTING> | severity: <final severity> | repro: <$RUN/repro/... path, or "no repro: <why>", or "n/a"> | evidence: <quote or file:line that decided it>
+- id: <id> | verdict: <CONFIRMED|CONFIRMED (partly pre-existing)|REJECTED|PRE-EXISTING> | severity: <final severity> | repro: <$RUN/repro/... path, or "no repro: <why>", or "n/a (omission)", or "n/a"> | evidence: <quote or file:line that decided it>
 ```

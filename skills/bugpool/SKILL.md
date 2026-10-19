@@ -7,8 +7,8 @@ description: >
   optional auto-fix in an isolated worktree. Supports PR mode, --local (no PR needed) and
   --dry-run (no GitHub or git writes). Use for /bugpool, PR review, review triage, or
   reviewing a branch before opening a PR.
-version: "3.1.0"
-argument-hint: "[pr-number|pr-url] [--local] [--base <ref>] [--dry-run] [--push] [--no-ignore]"
+version: "3.2.0"
+argument-hint: "[pr-number|pr-url] [--local] [--base <ref>] [--dry-run] [--push] [--no-ignore] [--quick] [--spec <ref>]"
 ---
 
 # Bugpool
@@ -18,7 +18,7 @@ argument-hint: "[pr-number|pr-url] [--local] [--base <ref>] [--dry-run] [--push]
 ## Invocation
 
 ```
-/bugpool [<pr number|url>] [--local] [--base <ref>] [--dry-run] [--push] [--no-ignore]
+/bugpool [<pr number|url>] [--local] [--base <ref>] [--dry-run] [--push] [--no-ignore] [--quick] [--spec <ref>]
 ```
 
 | Flag | Effect |
@@ -28,6 +28,8 @@ argument-hint: "[pr-number|pr-url] [--local] [--base <ref>] [--dry-run] [--push]
 | `--dry-run` | Review and report only. **No GitHub writes, no commits, no pushes, no file edits.** |
 | `--push` | Allow pushing the auto-fix commit to the PR branch. Without it, fixes stay on a local branch |
 | `--no-ignore` | Review every changed file. By default lockfiles, generated migration metadata (`**/meta/*_snapshot.json`, `_journal.json`) and `BUGPOOL_IGNORE_DIRS` (default `openspec/ docs/`) are left out; `BUGPOOL_IGNORE` replaces the default globs |
+| `--quick` | Fast 2-axis review (Correctness & Security vs Standards & Spec) in < 30s. Skips heavy worktree, repros, and auto-fix |
+| `--spec <ref>` | Explicit specification source (file path, URL, or text) to audit against |
 
 ## Hard rules
 
@@ -37,7 +39,18 @@ argument-hint: "[pr-number|pr-url] [--local] [--base <ref>] [--dry-run] [--push]
 - Report MEDIUM+ findings and LOW findings of category `bug` only after validation, always with `file:line` evidence; other LOW/NIT go under "Not validated".
 - Reviewers and validators never write to the repository. Validators may write throwaway reproductions under `$RUN/repro/` only.
 
-## Workflow
+## Quick Mode (`--quick`)
+
+When `--quick` is passed, bypass the heavyweight multi-stage pipeline, worktree isolation, throwaway repros, and auto-fix. Execute this fast 2-axis review directly:
+
+1. **Context & Diff**: Run Step 1 (Context & Spec discovery) to set the review root and write `$RUN/diff` and `$RUN/spec.txt` (if available).
+2. **Light Pre-pass**: Run lint check and typecheck on changed files via `bash <skill>/scripts/prepass.sh <base> [--local] [--no-ignore] > $RUN/prepass.md`.
+3. **Two Parallel Axes** (`sonnet`, in one message):
+   - **Axis 1 (Correctness & Security)**: Read diff, prepass, and hunt for runtime defects, race conditions, auth/data leaks, and unhandled errors using `<skill>/reference/lenses/correctness-stack.md` and `<skill>/reference/lenses/security.md`. Under 300 words.
+   - **Axis 2 (Standards & Spec)**: Read diff, repo standards, Fowler smells baseline (`<skill>/reference/lenses/architecture.md`), and spec (`$RUN/spec.txt` if available). Audit repo conventions, baseline smells, missing requirements, or spec divergence. Under 300 words.
+4. **Report**: Print the Quick Mode template from `<skill>/reference/report-templates.md` showing both axes and the worst issue found in each. No GitHub writes, no worktrees, no commits. Stop here.
+
+## Standard Workflow
 
 Copy this checklist and tick it as you go:
 
@@ -57,6 +70,11 @@ Copy this checklist and tick it as you go:
 - **PR mode**: `gh pr view <pr> --json number,title,body,state,baseRefName,headRefName,headRefOid`. If MERGED/CLOSED and not `--dry-run`, stop. `git fetch origin <baseRefName> <headRefName>`; base = `origin/<baseRefName>`. If `git rev-parse HEAD` ≠ `headRefOid`, run `<skill>/scripts/fix-worktree.sh create <headRefOid>` and use that path as the review root for every later step.
 - **Local mode**: review root = repo root, base = `--base` value; title/body = branch name + `git log --format=%s <base>..HEAD`. More than one commit in `<base>..HEAD` → **multi-commit range** (tell the Router; the title/body is only a commit log).
 - Create a fresh run directory: `RUN=$(mktemp -d "${TMPDIR:-/tmp}/bugpool-$(git rev-parse --short HEAD)-XXXX")`. Never reuse an earlier run's directory or its files (stale `lens-*.md` would be read as this run's output). Write the filtered diff once: `bash <skill>/scripts/diff.sh <base> [--local] [--no-ignore] > $RUN/diff`. Note changed line count.
+- **Spec discovery**:
+  1. If `--spec <arg>` was passed: write it (or its content if a file path) to `$RUN/spec.txt`.
+  2. If PR mode: inspect PR body and any referenced issues (`#123`, `Closes #45`) via `gh issue view <id> --json title,body`; write to `$RUN/spec.txt`.
+  3. If local mode without `--spec`: check `specs/`, `openspec/`, `docs/specs/` or `.scratch/` matching the branch name or feature; if found, write to `$RUN/spec.txt`.
+  4. If found, mark spec as available for Router and Lenses; otherwise mark `Spec: none`.
 - Snapshot `git status --porcelain > $RUN/status.before` (used after validation).
 
 ### 2. Pre-pass
@@ -65,11 +83,11 @@ From the review root: `bash <skill>/scripts/prepass.sh <base> [--local] [--no-ig
 
 ### 3. Router (`haiku`)
 
-Spawn one Agent (`model: haiku`) with: "Read `<skill>/reference/lenses/router.md` and follow it. Repo: <review root>. Base: <base>. Diff: <diff path>. Pre-pass: <prepass path>. Title/body: …. Multi-commit local range: <yes|no>". Keep its SCOPE_DRIFT, DANGER and EXTRA_LENSES. If the reply is not exactly the documented format (extra notes, missing DANGER, unknown lens), re-ask once with the format quoted; then use what parses and say so in the report.
+Spawn one Agent (`model: haiku`) with: "Read `<skill>/reference/lenses/router.md` and follow it. Repo: <review root>. Base: <base>. Diff: <diff path>. Pre-pass: <prepass path>. Title/body: …. Spec: <spec path or none>. Multi-commit local range: <yes|no>". Keep its SCOPE_DRIFT, DANGER and EXTRA_LENSES. If the reply is not exactly the documented format (extra notes, missing DANGER, unknown lens), re-ask once with the format quoted; then use what parses and say so in the report.
 
 ### 4. Lenses (`sonnet`, in parallel)
 
-In **one message**, spawn an Agent (`model: sonnet`) per lens: always `correctness-stack` and `security`, plus each lens in EXTRA_LENSES. Prompt: "Read `<skill>/reference/lenses/<lens>.md` and follow it exactly. Repo: … Base: … Diff: … Pre-pass: … Title/body: … Scope: … Output file: `$RUN/lens-<lens>.md`". Lenses are never skipped: not because another lens found a CRITICAL issue, and not because the diff is small. Never review the diff yourself in place of the lens agents; a small diff just makes them fast.
+In **one message**, spawn an Agent (`model: sonnet`) per lens: always `correctness-stack` and `security`, plus each lens in EXTRA_LENSES. Prompt: "Read `<skill>/reference/lenses/<lens>.md` and follow it exactly. Repo: … Base: … Diff: … Pre-pass: … Title/body: … Spec: <spec path or none> … Scope: … Output file: `$RUN/lens-<lens>.md`". Lenses are never skipped: not because another lens found a CRITICAL issue, and not because the diff is small. Never review the diff yourself in place of the lens agents; a small diff just makes them fast.
 
 Each lens writes `STRUCTURED_FINDINGS` and `COVERAGE` to its output file and replies with the path and count; read the files, not the replies. If a lens lists changed code files under `skipped`, you may re-dispatch that lens **once**, scoped to those files, writing `$RUN/lens-<lens>-2.md`.
 

@@ -31,15 +31,18 @@ npx skills add artgustavobarros/skills --list
 ## 📦 Skills Disponíveis
 
 ### 1. [`bugpool`](./skills/bugpool/SKILL.md) — Revisão de PR multi-lente com triagem segura
-> **Comando:** `/bugpool [pr-number|pr-url] [--local] [--base <ref>] [--dry-run] [--push] [--no-ignore]` | **Versão:** `3.1.0`
+> **Comando:** `/bugpool [pr-number|pr-url] [--local] [--base <ref>] [--dry-run] [--push] [--no-ignore] [--quick] [--spec <ref>]` | **Versão:** `3.2.0`
 
 Revisa um Pull Request (ou a sua branch antes de abrir o PR), valida cada achado antes de reportar, tria threads de bots sem nunca tocar em conversas humanas e, opcionalmente, corrige o que é claro num worktree isolado.
 
 * **Pré-passe determinístico:** lint (só check, nunca `--fix`), typecheck e testes relacionados aos arquivos alterados, em segundos. Timeout de setup é reexecutado uma vez e vira `flaky`/`inconclusive`, não evidência falsa de regressão. Lockfiles, snapshots de migração e pastas de docs ficam fora do diff (`--no-ignore` desliga).
-* **Lentes core sempre ligadas:** `correctness-stack` e `security` rodam em todo review (`sonnet`). O router (`haiku`) só **adiciona** `qa` e `architecture`, nunca remove uma lente core. Achado CRITICAL não interrompe as outras lentes.
+* **Lentes core sempre ligadas:** `correctness-stack` e `security` rodam em todo review (`sonnet`). O router (`haiku`) adiciona `spec`, `qa` e `architecture` conforme necessidade.
+* **Lente de fidelidade à especificação (`spec`):** audita se os requisitos da issue, PR ou documento de requisitos foram atendidos (`spec/missing`, `spec/divergence`, `spec/creep`) com citação textual obrigatória da spec. Descoberta automática via `--spec`, PR description/issues ou arquivos locais.
+* **Catálogo Fowler na arquitetura:** avalia 12 code smells de Martin Fowler (*Refactoring*, cap. 3). Documentação do repositório (`CONTRIBUTING.md`) sempre sobrepõe; smells puros ficam no máximo LOW (não descontam pontuação).
+* **Modo Rápido (`--quick`):** sanity check em dois eixos (Corretude & Segurança vs Padrões & Spec) em < 30 segundos e < US$ 0,15, sem worktrees, repros ou auto-fix.
 * **Validação que tenta refutar:** achados MEDIUM+ e LOW de categoria `bug` são deduplicados e checados por um validador (`sonnet`; `opus` para segurança CRITICAL/HIGH), que pode reproduzir o bug com um teste descartável fora do repo. O que não tem prova em `arquivo:linha` é descartado.
 * **Cobertura declarada:** cada lente diz o que leu e o que pulou, então "sem achados" não se confunde com "não olhei".
-* **Modos:** PR, `--local` (sem PR, revisa branch + working tree) e `--dry-run` (sem escrita no GitHub, sem commit, sem editar arquivos).
+* **Modos:** PR, `--local` (sem PR, revisa branch + working tree), `--dry-run` (sem escrita no GitHub, sem commit) e `--quick` (rápido de dois eixos).
 * **Auto-fix seguro:** recusa working tree sujo, corrige num git worktree isolado, gate = typecheck + lint check + testes relacionados, um commit único e push só com `--push`. Nunca roda `git checkout --`/`reset` na sua árvore.
 * **Imunidade humana:** thread com qualquer comentário humano nunca é corrigida, respondida nem resolvida. O cabeçalho do bot só conta se estiver no início do comentário.
 * **Resumo sticky único** com veredito e score (`100 − Σ deduções`), postado por script (quebras de linha reais).
@@ -56,7 +59,13 @@ Comparado ao `/code-review` padrão do Claude Code, nos mesmos cenários (uma ex
 | composição (2 seeds) | 2/2 · US$0,11 | 1/2 · US$0,75 |
 | limpo (falsos positivos) | 2 | 0 |
 
-Acha mais (13/15 contra 11/15) e erra menos, a ~8,5x o custo e ~6x o tempo.
+Acha mais (13/15 contra 11/15) e erra menos, a ~8,5x o custo e ~6x o tempo (no modo completo). Use `--quick` para custo e tempo equivalentes ao `/code-review`.
+
+#### 3.2.0
+- **Lente Spec**: Descoberta automática de especificações (`--spec`, issues de PR, arquivos locais) e auditoria de requisitos ausentes (`spec/missing`), divergências (`spec/divergence`) e escopo extra (`spec/creep`).
+- **Catálogo Fowler**: 12 code smells de Martin Fowler integrados na lente `architecture`; prevalência para normas do repo e teto LOW para smells puros.
+- **Modo Quick (`--quick`)**: Execução de dois eixos em < 30s (< $0,15) sem worktree nem scripts de repro, para feedback ágil no fluxo de dev local.
+- **Validador**: Suporte a verificação de requisitos ausentes de especificação com `repro: n/a (omission)`.
 
 #### 3.1.0
 - Pré-passe: retry único só para timeout de setup/hook (`flaky`/`inconclusive`), contagem de testes, filtro de ruído no diff (`BUGPOOL_IGNORE`, `BUGPOOL_IGNORE_DIRS`, `--no-ignore`) e `scripts/diff.sh`.
