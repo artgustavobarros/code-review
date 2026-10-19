@@ -27,7 +27,7 @@ argument-hint: "[pr-number|pr-url] [--local] [--base <ref>] [--dry-run] [--push]
 | `--local` | Review `<base>...HEAD` plus uncommitted/untracked changes. No GitHub calls. `--base` defaults to `origin/main` (or `main`) |
 | `--dry-run` | Review and report only. **No GitHub writes, no commits, no pushes, no file edits.** |
 | `--push` | Allow pushing the auto-fix commit to the PR branch. Without it, fixes stay on a local branch |
-| `--no-ignore` | Review every changed file. By default lockfiles, generated migration metadata (`**/meta/*_snapshot.json`, `_journal.json`) and `BUGPOOL_IGNORE_DIRS` (default `openspec/ docs/`) are left out; `BUGPOOL_IGNORE` replaces the default globs |
+| `--no-ignore` | Review every changed file. By default lockfiles, generated migration metadata (`**/meta/*_snapshot.json`, `_journal.json`) and `CODE_REVIEW_IGNORE_DIRS` (default `openspec/ docs/`, fallback `BUGPOOL_IGNORE_DIRS`) are left out; `CODE_REVIEW_IGNORE` (fallback `BUGPOOL_IGNORE`) replaces the default globs |
 | `--quick` | Fast 2-axis review (Correctness & Security vs Standards & Spec) in < 30s. Skips heavy worktree, repros, and auto-fix |
 | `--spec <ref>` | Explicit specification source (file path, URL, or text) to audit against |
 
@@ -38,7 +38,7 @@ argument-hint: "[pr-number|pr-url] [--local] [--base <ref>] [--dry-run] [--push]
 - Every posted comment goes through `scripts/post.sh` (adds the bot header, sends the body from a file).
 - Report MEDIUM+ findings and LOW findings of category `bug` only after validation, always with `file:line` evidence; other LOW/NIT go under "Not validated".
 - Reviewers and validators never write to the repository. Validators may write throwaway reproductions under `$RUN/repro/` only.
-- For every finding rated HIGH or CRITICAL of category `bug`, the validator MUST construct an empirical reproduction proof under `$RUN/repro/` (or verified payload/command), and audit historical commit intent (`git log`) before confirming. Unproven hypotheses must be demoted or rejected.
+- For every finding rated HIGH or CRITICAL (regardless of category, except non-executable spec omissions), the validator MUST construct an empirical reproduction proof under `$RUN/repro/` (or verified payload/command), and audit historical commit intent (`git log`) before confirming. Unproven hypotheses must be demoted or rejected.
 
 ## Quick Mode (`--quick`)
 
@@ -70,7 +70,7 @@ Copy this checklist and tick it as you go:
 
 - **PR mode**: `gh pr view <pr> --json number,title,body,state,baseRefName,headRefName,headRefOid`. If MERGED/CLOSED and not `--dry-run`, stop. `git fetch origin <baseRefName> <headRefName>`; base = `origin/<baseRefName>`. If `git rev-parse HEAD` ≠ `headRefOid`, run `<skill>/scripts/fix-worktree.sh create <headRefOid>` and use that path as the review root for every later step.
 - **Local mode**: review root = repo root, base = `--base` value; title/body = branch name + `git log --format=%s <base>..HEAD`. More than one commit in `<base>..HEAD` → **multi-commit range** (tell the Router; the title/body is only a commit log).
-- Create a fresh run directory: `RUN=$(mktemp -d "${TMPDIR:-/tmp}/code-review-$(git rev-parse --short HEAD)-XXXX")`. Never reuse an earlier run's directory or its files (stale `lens-*.md` would be read as this run's output). Write the filtered diff once: `bash <skill>/scripts/diff.sh <base> [--local] [--no-ignore] > $RUN/diff`. Note changed line count.
+- Create a fresh run directory: `RUN=$(mktemp -d "${TMPDIR:-/tmp}/code-review-$(git rev-parse --short HEAD)-XXXXXX")`. Never reuse an earlier run's directory or its files (stale `lens-*.md` would be read as this run's output). Write the filtered diff once: `bash <skill>/scripts/diff.sh <base> [--local] [--no-ignore] > $RUN/diff`. Note changed line count.
 - **Spec discovery**:
   1. If `--spec <arg>` was passed: write it (or its content if a file path) to `$RUN/spec.txt`.
   2. If PR mode: inspect PR body and any referenced issues (`#123`, `Closes #45`) via `gh issue view <id> --json title,body`; write to `$RUN/spec.txt`.

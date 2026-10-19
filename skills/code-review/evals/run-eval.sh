@@ -10,10 +10,11 @@
 #   --label     suffix for the run file (default: skill version or "baseline")
 #   --keep      keep the benchmark worktree after the run
 #
-# Env: BUGPOOL_EVAL_DIR (default $TMPDIR/code-review-eval), BUGPOOL_EVAL_BUDGET (USD, default 3),
-#      BUGPOOL_EVAL_MODEL (orchestrator model, default sonnet),
-#      BUGPOOL_EVAL_SKILL (skill dir under test, default: this skill; e.g. a copy of the
-#      previous version to record "before" numbers with the current manifests).
+# Env: CODE_REVIEW_EVAL_DIR (default $TMPDIR/code-review-eval, fallback BUGPOOL_EVAL_DIR),
+#      CODE_REVIEW_EVAL_BUDGET (USD, default 3, fallback BUGPOOL_EVAL_BUDGET),
+#      CODE_REVIEW_EVAL_MODEL (orchestrator model, default sonnet, fallback BUGPOOL_EVAL_MODEL),
+#      CODE_REVIEW_EVAL_SKILL (skill dir under test, default: this skill; e.g. a copy of the
+#      previous version to record "before" numbers with the current manifests, fallback BUGPOOL_EVAL_SKILL).
 # Safety: runs inside a throwaway worktree outside the repo; push, commit, gh and Edit are
 # disallowed. Write stays allowed because lenses write $RUN/lens-*.md (3.1.0+); the skill's
 # own git-status check reports any write into the worktree. Nothing is posted to GitHub.
@@ -36,12 +37,12 @@ while [[ $# -gt 0 ]]; do
 done
 
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-skill_dir="${BUGPOOL_EVAL_SKILL:-$(dirname "$here")}"
+skill_dir="${CODE_REVIEW_EVAL_SKILL:-${BUGPOOL_EVAL_SKILL:-$(dirname "$here")}}"
 repo="$(git -C "$here" rev-parse --show-toplevel)"
 manifest="$here/manifests/$scenario.json"
-out_dir="${BUGPOOL_EVAL_DIR:-${TMPDIR:-/tmp}/code-review-eval}"
-budget="${BUGPOOL_EVAL_BUDGET:-3}"
-model="${BUGPOOL_EVAL_MODEL:-sonnet}"
+out_dir="${CODE_REVIEW_EVAL_DIR:-${BUGPOOL_EVAL_DIR:-${TMPDIR:-/tmp}/code-review-eval}}"
+budget="${CODE_REVIEW_EVAL_BUDGET:-${BUGPOOL_EVAL_BUDGET:-3}}"
+model="${CODE_REVIEW_EVAL_MODEL:-${BUGPOOL_EVAL_MODEL:-sonnet}}"
 [[ -f "$manifest" ]] || { echo "no manifest: $manifest" >&2; exit 2; }
 title="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["title"])' "$manifest")"
 version="$(sed -n 's/^version: *"\{0,1\}\([^"]*\)"\{0,1\}$/\1/p' "$skill_dir/SKILL.md" | head -1)"

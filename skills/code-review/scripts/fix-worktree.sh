@@ -14,8 +14,10 @@ here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=lib.sh
 source "$here/lib.sh"
 
-repo="$(git rev-parse --show-toplevel)"
-prefix="${TMPDIR:-/tmp}/code-review-fix-"
+common_dir="$(git rev-parse --git-common-dir)"
+repo="$(cd "$common_dir/.." && pwd)"
+tmp_dir="$(cd "${TMPDIR:-/tmp}" && pwd)"
+prefix="$tmp_dir/code-review-fix-"
 
 guard_wt() {
   local wt

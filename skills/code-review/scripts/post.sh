@@ -7,13 +7,17 @@
 #   post.sh find-sticky <pr_number>                       print the summary comment id (read-only)
 set -euo pipefail
 
-HEADER=$'> [!NOTE]\n> 🤖 Automated comment by **Bugpool** — not written by a human'
+HEADER=$'> [!NOTE]\n> 🤖 Automated comment by **Code Review** — not written by a human'
 MARKER='<!-- code-review-summary -->'
+
+body=""
+tmp=""
+trap 'rm -f "${body:-}" "${tmp:-}"' EXIT
 
 with_header() {
   local src="$1" out
   out="$(mktemp)"
-  if head -c 200 "$src" | grep -q "Automated comment by \*\*Bugpool\*\*"; then
+  if head -c 200 "$src" | grep -qE "Automated comment by \*\*(Code Review|Bugpool)\*\*"; then
     cat "$src" >"$out"
   else
     { printf '%s\n\n' "$HEADER"; cat "$src"; } >"$out"
@@ -22,19 +26,23 @@ with_header() {
 }
 
 find_sticky() {
-  gh api "repos/{owner}/{repo}/issues/$1/comments" --paginate \
-    --jq ".[] | select(.body | contains(\"$MARKER\")) | .id" | head -1
+  local pr="${1##*/}"
+  gh api "repos/{owner}/{repo}/issues/$pr/comments" --paginate \
+    --jq "([ .[] | select((.body // \"\") | contains(\"$MARKER\")) ] | first | .id) // empty"
 }
 
 cmd="${1:?command required: reply|sticky|find-sticky}"
 case "$cmd" in
   reply)
+    pr="${2:?pr}"
+    pr="${pr##*/}"
     body="$(with_header "${4:?body file required}")"
-    gh api "repos/{owner}/{repo}/pulls/${2:?pr}/comments/${3:?comment id}/replies" -X POST -F body=@"$body" --jq .html_url
+    gh api "repos/{owner}/{repo}/pulls/${pr}/comments/${3:?comment id}/replies" -X POST -F body=@"$body" --jq .html_url
     rm -f "$body"
     ;;
   sticky)
     pr="${2:?pr}"
+    pr="${pr##*/}"
     src="${3:?body file required}"
     tmp="$(mktemp)"
     if grep -q "$MARKER" "$src"; then cat "$src" >"$tmp"; else { echo "$MARKER"; cat "$src"; } >"$tmp"; fi
@@ -52,7 +60,8 @@ case "$cmd" in
     rm -f "$body" "$tmp"
     ;;
   find-sticky)
-    find_sticky "${2:?pr}"
+    pr="${2:?pr}"
+    find_sticky "${pr##*/}"
     ;;
   *)
     echo "unknown command: $cmd" >&2

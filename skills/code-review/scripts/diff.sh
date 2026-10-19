@@ -16,7 +16,7 @@ local_mode=0
 for arg in "$@"; do
   case "$arg" in
     --local) local_mode=1 ;;
-    --no-ignore) export BUGPOOL_NO_IGNORE=1 ;;
+    --no-ignore) export CODE_REVIEW_NO_IGNORE=1 BUGPOOL_NO_IGNORE=1 ;;
   esac
 done
 review_diff "$base" "$local_mode"

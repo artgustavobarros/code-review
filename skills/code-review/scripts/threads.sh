@@ -12,6 +12,7 @@ cmd="${1:?command required: list|resolve}"
 case "$cmd" in
   list)
     pr="${2:?pr number required}"
+    pr="${pr##*/}"
     owner_repo="$(gh repo view --json nameWithOwner -q .nameWithOwner)"
     gh api graphql --paginate -F owner="${owner_repo%/*}" -F repo="${owner_repo#*/}" -F num="$pr" -f query='
       query($owner:String!, $repo:String!, $num:Int!, $endCursor:String) {
@@ -30,13 +31,14 @@ case "$cmd" in
         }
       }' --jq '.data.repository.pullRequest.reviewThreads.nodes[]' |
       python3 -c '
-import json, sys
+import json, re, sys
 BOTS = {"coderabbitai", "greptile-apps", "sonarcloud", "github-actions", "copilot-pull-request-reviewer", "vercel"}
-HEADER = "> [!NOTE]\n> 🤖 Automated comment by **Bugpool**"
+HEADER_RE = re.compile(r"^>\s*\[!NOTE\]\s*\n>\s*🤖\s*Automated comment by \*\*(Code Review|Bugpool)\*\*", re.IGNORECASE)
 def automated(c):
     a = c.get("author") or {}
     login = (a.get("login") or "").lower()
-    return a.get("__typename") == "Bot" or login.endswith("[bot]") or login in BOTS or (c.get("body") or "").lstrip().startswith(HEADER)
+    body = (c.get("body") or "").lstrip()
+    return a.get("__typename") == "Bot" or login.endswith("[bot]") or login in BOTS or bool(HEADER_RE.search(body))
 for line in sys.stdin:
     t = json.loads(line)
     if t["isResolved"]:

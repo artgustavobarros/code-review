@@ -1,4 +1,4 @@
-# Bugpool evaluation harness
+# Code Review evaluation harness
 
 Measures the skill the way a user runs it: a fresh headless Claude Code session invokes
 `/code-review --local --base <base> --dry-run` inside a throwaway git worktree with seeded bugs,
@@ -12,7 +12,7 @@ and reports cost and wall time (subagents included). Nothing is pushed, committe
   `<scenario>.base` (the ref to review against). `setup` edits are committed on `base` and the
   linear `base..head` commits are cherry-picked over them, so the setup stays out of the diff.
 - `run-eval.sh <scenario> [--baseline] [--label <name>] [--keep]` — builds the bench and runs
-  `claude -p` (orchestrator `sonnet`, budget cap `BUGPOOL_EVAL_BUDGET`, default $3) with
+  `claude -p` (orchestrator `sonnet`, budget cap `CODE_REVIEW_EVAL_BUDGET`, default $3) with
   `git push/commit/reset/checkout`, `gh`, `Edit` and `Write` disallowed. `--baseline` runs one
   generic single-reviewer prompt instead; `--code-review` runs Claude Code's built-in `/code-review`
   (default level) with the scenario changes staged on the review base, the reference code-review has to
@@ -85,6 +85,6 @@ validator's job.
 | composition (2 seeds) | 2/2 · $0.11 · 26 s | 1/2 · $0.75 · 90 s |
 | clean (FPs) | 2 · $0.09 · 27 s | 0 · $0.85 · 109 s |
 
-Bugpool finds more (13/15 vs 11/15) with fewer false positives, at ~8.5x the cost and ~6x the time.
+Code Review finds more (13/15 vs 11/15) with fewer false positives, at ~8.5x the cost and ~6x the time.
 Costs are the API-equivalent `total_cost_usd` the CLI reports (on a subscription they count against
 usage limits instead). Single runs each; LLM reviews are stochastic, so repeat borderline results.

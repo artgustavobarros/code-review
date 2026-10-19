@@ -25,7 +25,10 @@ Inputs: repo path, base ref, diff file, pre-pass file, PR title/body, scope, spe
 
 ## Rules
 
-- **Mandatory spec quote**: Every finding MUST quote the exact line or excerpt from the specification in `evidence`. For `spec/creep` arising from Diff-Inversion, quote the relevant capability boundary or non-goals section of the spec that it exceeds, and cite the uncalled route/export.
+- **Mandatory spec evidence**: Every finding MUST cite the specification in `evidence`:
+  - For `spec/missing` and `spec/divergence`: quote the exact requirement, criterion, or rule from the specification that is omitted or violated (`evidence: spec: "<quote>" | code: <file:line quote or omission site>`).
+  - For `spec/creep` (unrequested endpoints/capabilities via Diff-Inversion): quote the relevant boundary or non-goals section of the spec that it exceeds, OR if the spec does not explicitly state non-goals, declare an explicit absence assertion (`evidence: spec: "absence: no requirement or user journey in spec mandates this endpoint/behavior" | code: <file:line uncalled route/export>`).
+  - For `branch-parity` omissions (secondary branches skipping entity creation): quote the spec rule requiring companion records or parity, citing the secondary branch code omitting them.
 - **Severity rubric**:
   - Missing core requirement or direct business rule contradiction: HIGH or MEDIUM (based on consequence).
   - Unrequested public route handler, network endpoint, or exported capability (`spec/creep` via Diff-Inversion): **MEDIUM**.

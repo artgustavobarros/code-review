@@ -132,18 +132,22 @@ run_related_tests() {
   return 1
 }
 
-# Default diff noise filter: lockfiles and generated migration metadata. BUGPOOL_IGNORE
-# (space-separated globs) replaces it; BUGPOOL_IGNORE_DIRS (default "openspec/ docs/")
-# adds whole directories; BUGPOOL_NO_IGNORE=1 turns the filter off.
-BUGPOOL_DEFAULT_IGNORE="*.lock pnpm-lock.yaml package-lock.json yarn.lock bun.lockb skills-lock.json **/meta/*_snapshot.json **/meta/_journal.json"
+# Default diff noise filter: lockfiles and generated migration metadata. CODE_REVIEW_IGNORE / BUGPOOL_IGNORE
+# (space-separated globs) replaces it; CODE_REVIEW_IGNORE_DIRS / BUGPOOL_IGNORE_DIRS (default "openspec/ docs/")
+# adds whole directories; CODE_REVIEW_NO_IGNORE / BUGPOOL_NO_IGNORE=1 turns the filter off.
+DEFAULT_IGNORE="*.lock pnpm-lock.yaml package-lock.json yarn.lock bun.lockb skills-lock.json **/meta/*_snapshot.json **/meta/_journal.json"
+BUGPOOL_DEFAULT_IGNORE="$DEFAULT_IGNORE"
 
 # ignore_globs: the active ignore globs, one per line (read -a: no shell globbing).
 ignore_globs() {
-  [[ "${BUGPOOL_NO_IGNORE:-0}" == 1 ]] && return 0
+  local no_ignore="${CODE_REVIEW_NO_IGNORE:-${BUGPOOL_NO_IGNORE:-0}}"
+  [[ "$no_ignore" == 1 ]] && return 0
   local -a globs dirs
   local d
-  read -ra globs <<<"${BUGPOOL_IGNORE-$BUGPOOL_DEFAULT_IGNORE}"
-  read -ra dirs <<<"${BUGPOOL_IGNORE_DIRS-openspec/ docs/}"
+  local ignore_val="${CODE_REVIEW_IGNORE:-${BUGPOOL_IGNORE-$DEFAULT_IGNORE}}"
+  local ignore_dirs_val="${CODE_REVIEW_IGNORE_DIRS:-${BUGPOOL_IGNORE_DIRS-openspec/ docs/}}"
+  read -ra globs <<<"$ignore_val"
+  read -ra dirs <<<"$ignore_dirs_val"
   for d in "${dirs[@]}"; do globs+=("${d%/}/**"); done
   [[ ${#globs[@]} -gt 0 ]] && printf '%s\n' "${globs[@]}"
   return 0
@@ -163,6 +167,7 @@ ignore_pathspecs() {
 # Deleted files are left out; untracked ones count in local mode.
 changed_files() {
   local base="$1" local_mode="$2"
+  [[ "$base" == -* ]] && { echo "invalid base: $base" >&2; return 2; }
   local -a ps=()
   [[ "${3:-}" == "--all" ]] || mapfile -t ps < <(ignore_pathspecs)
   {
@@ -177,28 +182,37 @@ changed_files() {
 # review_diff <base> <local:0|1>: the filtered diff every reviewer reads.
 review_diff() {
   local base="$1" local_mode="$2"
+  [[ "$base" == -* ]] && { echo "invalid base: $base" >&2; return 2; }
   local -a ps
   mapfile -t ps < <(ignore_pathspecs)
   git diff "$base...HEAD" -- . "${ps[@]}"
-  [[ $local_mode -eq 1 ]] && git diff HEAD -- . "${ps[@]}"
+  if [[ $local_mode -eq 1 ]]; then
+    git diff HEAD -- . "${ps[@]}"
+    local -a untracked
+    mapfile -t untracked < <(git ls-files --others --exclude-standard -- . "${ps[@]}")
+    local f
+    for f in "${untracked[@]}"; do
+      [[ -f "$f" ]] && { git diff --no-index -- /dev/null "$f" || true; }
+    done
+  fi
   return 0
 }
 
 # ignored_summary <base> <local:0|1>: "ignored: N (<globs>)" for the report.
 ignored_summary() {
   local all kept
-  all="$(changed_files "$1" "$2" --all | grep -c .)"
-  kept="$(changed_files "$1" "$2" | grep -c .)"
+  all="$(changed_files "$1" "$2" --all | wc -l | tr -d ' ')"
+  kept="$(changed_files "$1" "$2" | wc -l | tr -d ' ')"
   echo "ignored: $((all - kept)) ($(ignore_globs | paste -sd ' ' -))"
 }
 
-# link_deps <src_repo> <dst_worktree>: symlink node_modules and .env* (not .env.example).
+# link_deps <src_repo> <dst_worktree>: symlink node_modules and copy .env* (not .env.example).
 link_deps() {
   local src="$1" dst="$2" f
   [[ -e "$src/node_modules" && ! -e "$dst/node_modules" ]] && ln -s "$src/node_modules" "$dst/node_modules"
   for f in "$src"/.env*; do
     [[ -e "$f" ]] || continue
     [[ "$(basename "$f")" == ".env.example" ]] && continue
-    [[ -e "$dst/$(basename "$f")" ]] || ln -s "$f" "$dst/$(basename "$f")"
+    [[ -e "$dst/$(basename "$f")" ]] || cp "$f" "$dst/$(basename "$f")"
   done
 }

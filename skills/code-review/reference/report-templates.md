@@ -75,7 +75,7 @@ Coverage: <lens: skipped files, only for lenses that skipped changed code> · No
 ## Quick mode report (`--quick`)
 
 ```markdown
-### ⚡ Bugpool Quick Review — <PR #n | local>
+### ⚡ Code Review Quick Review — <PR #n | local>
 
 #### 🛡️ Correctness & Security
 - **Findings:** <count> | **Worst:** <none or SEV file:line — description>

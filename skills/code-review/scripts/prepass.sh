@@ -4,7 +4,7 @@
 #   prepass.sh <base> [--local] [--no-ignore]
 #
 # Changed files = git diff <base>...HEAD (+ uncommitted and untracked with --local), minus
-# the noise filter (lockfiles, generated migration metadata, BUGPOOL_IGNORE_DIRS; see lib.sh).
+# the noise filter (lockfiles, generated migration metadata, CODE_REVIEW_IGNORE_DIRS; see lib.sh).
 # Runs lint check (no fixes) on changed files, project typecheck, and related unit tests.
 # Test files that fail only on setup/hook timeouts are re-run once: `flaky` = passed on the
 # retry, `inconclusive` = timed out again. Assertion failures are never retried (`fail`).
@@ -22,10 +22,10 @@ local_mode=0
 for arg in "$@"; do
   case "$arg" in
     --local) local_mode=1 ;;
-    --no-ignore) export BUGPOOL_NO_IGNORE=1 ;;
+    --no-ignore) export CODE_REVIEW_NO_IGNORE=1 BUGPOOL_NO_IGNORE=1 ;;
   esac
 done
-max_lines="${BUGPOOL_PREPASS_MAX_LINES:-150}"
+max_lines="${CODE_REVIEW_PREPASS_MAX_LINES:-${BUGPOOL_PREPASS_MAX_LINES:-150}}"
 
 mapfile -t changed < <(changed_files "$base" "$local_mode")
 mapfile -t files < <(code_files "${changed[@]}")
@@ -46,7 +46,7 @@ section() {
   [[ $status -eq 127 ]] && label="skipped"
   [[ $status -ne 0 && $status -ne 127 ]] && label="fail"
   echo "### $name: $label"
-  if [[ $label != "ok" || -n "${BUGPOOL_PREPASS_VERBOSE:-}" ]]; then
+  if [[ $label != "ok" || -n "${CODE_REVIEW_PREPASS_VERBOSE:-${BUGPOOL_PREPASS_VERBOSE:-}}" ]]; then
     print_block "$out"
   fi
   echo
@@ -70,7 +70,7 @@ tests_section() {
     flaky) echo "Not evidence of a regression: the retried files timed out in setup and passed on the retry." ;;
     inconclusive) echo "Not evidence either way: the retried files timed out in setup twice. Report them as not verified." ;;
   esac
-  if [[ $label != "ok" || -n "${BUGPOOL_PREPASS_VERBOSE:-}" ]]; then
+  if [[ $label != "ok" || -n "${CODE_REVIEW_PREPASS_VERBOSE:-${BUGPOOL_PREPASS_VERBOSE:-}}" ]]; then
     print_block "$out"
   fi
   echo
