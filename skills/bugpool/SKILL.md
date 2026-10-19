@@ -3,11 +3,10 @@ name: bugpool
 description: >
   Multi-lens PR review and triage. Runs a deterministic pre-pass (lint check, typecheck,
   related tests), always-on correctness and security lenses plus router-selected extras,
-  refute-first validation of findings, human-safe triage of GitHub review threads, and
-  optional auto-fix in an isolated worktree. Supports PR mode, --local (no PR needed) and
-  --dry-run (no GitHub or git writes). Use for /bugpool, PR review, review triage, or
-  reviewing a branch before opening a PR.
-version: "3.3.0"
+  framework invariants check, empirical hands-on verification (mandatory PoC for HIGH/CRITICAL),
+  historical intent audit (git log), refute-first validation, and human-safe triage.
+  Supports PR mode, --local (no PR needed) and --dry-run.
+version: "3.4.0"
 argument-hint: "[pr-number|pr-url] [--local] [--base <ref>] [--dry-run] [--push] [--no-ignore] [--quick] [--spec <ref>]"
 ---
 
@@ -38,6 +37,7 @@ argument-hint: "[pr-number|pr-url] [--local] [--base <ref>] [--dry-run] [--push]
 - Every posted comment goes through `scripts/post.sh` (adds the bot header, sends the body from a file).
 - Report MEDIUM+ findings and LOW findings of category `bug` only after validation, always with `file:line` evidence; other LOW/NIT go under "Not validated".
 - Reviewers and validators never write to the repository. Validators may write throwaway reproductions under `$RUN/repro/` only.
+- For every finding rated HIGH or CRITICAL of category `bug`, the validator MUST construct an empirical reproduction proof under `$RUN/repro/` (or verified payload/command), and audit historical commit intent (`git log`) before confirming. Unproven hypotheses must be demoted or rejected.
 
 ## Quick Mode (`--quick`)
 

@@ -15,7 +15,13 @@ Inputs: repo path, base ref, diff file, pre-pass file, PR title/body, scope.
    - **Boundaries**: null/empty/zero, off-by-one, rounding, time zones, date edges (week/month/year, Sunday), first/last element.
    - **Concurrency**: races, leases/locks, double execution, check-then-act.
    - **Composition**: for optimistic state, write queues, retries, undo/rollback and local caches, one operation being right proves little. Simulate two operations A then B on the same record and field for ok/ok, fail/ok, ok/fail and fail/fail, plus an operation on another code path that bypasses the same queue or lock. Write down the final client state and the server state for each; any mismatch is a finding.
-   - **React/Next.js**: hook dependency arrays vs values referenced inside, stale closures, effects that could be derived, server/client boundaries, serialization, hydration mismatch (time- or locale-dependent render).
+   - **React/Next.js & Framework Invariants**:
+     * Invariants & Soft Navigation: does client-side navigation (Next.js App Router `<Link>`, `router.push`, history back/forward) bypass browser-level exit hooks (`window.beforeunload`), causing silent data loss for unsaved drafts?
+     * Component Boundaries: are server-only route segment options (`export const dynamic`, `revalidate`) placed inside `'use client'` files?
+     * Hook dependencies & Stale Closures: dependency arrays vs values referenced inside, effects that could be derived, serialization, hydration mismatch.
+   - **In-Flight & Asynchronous State Simulation**:
+     * When form submissions, clicks, or transitions read from async queries/hooks: what happens if the user interacts while `isLoading: true` or `isPending: true`? Does unresolved data evaluate as falsy/undefined, silently dropping payload fields or companion entities?
+     * Rapid double-submits or clicking Submit before dependencies resolve.
    - **UI State Lifecycle & Interactions**: for components handling reset, clear, dismiss, or filter toggles, trace what happens after the event. Does any banner, indicator, counter, or notice continue displaying stale props or initial server state (e.g. `initial` query params or scope labels) after client state has been cleared?
    - **Contracts**: do changed signatures/semantics still match every caller? Hallucinated or misused APIs?
 3. Size rubric (report only when it clearly hurts): function > ~50 lines, nesting > 3, > 3 positional params, boolean flag params.

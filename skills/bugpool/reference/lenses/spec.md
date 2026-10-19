@@ -19,6 +19,9 @@ Inputs: repo path, base ref, diff file, pre-pass file, PR title/body, scope, spe
    - For interactive UI components (filter controls, search bars, modal dialogs, dismissal banners, pagination):
    - Trace user actions: what happens when a user clicks "Clear", "Reset", "Close", or "Toggle"?
    - Verify whether notices, status chips, or contextual banners derived from initial props/parameters (`initial`, query params) persist with stale data after state has been reset to default. If a banner displays scope-specific text for an unfiltered view, report as `spec/divergence` or category `bug`.
+5. **Branch & Selection Matrix Parity Audit**:
+   - When reviewing a creation flow, wizard, or settings interface supporting multiple selectable configurations, templates, or plan tiers:
+   - Audit non-default branches: do alternative choices provision necessary companion entities, relations, or navigations equivalent to the primary default flow? If a secondary option (e.g. an alternative template or layout) silently omits companion records, sub-pages, or validations without spec mandate, report as `spec/divergence` or category `bug`.
 
 ## Rules
 
