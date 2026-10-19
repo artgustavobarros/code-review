@@ -12,12 +12,12 @@ Inputs: repo path, base ref, diff file, pre-pass file, PR title/body, scope.
 4. **Fowler Code Smell Baseline** (_Refactoring_, ch. 3):
    - **Mysterious Name**: function, variable, or type whose name obscures what it does or holds.
    - **Duplicated Code**: identical or nearly identical logic structure in multiple hunks or files.
-   - **Feature Envy**: method or function that reaches into another module's/object's data more than its own.
+   - **Feature Envy**: method or function that reaches into another module's/object's data more than its own (e.g. presentation components or JSX blocks directly embedding complex array filtering, search normalization, or sorting algorithms that belong in pure domain helpers).
    - **Data Clumps**: 3+ fields or parameters that repeatedly travel together (type wanting to be born).
    - **Primitive Obsession**: primitives or strings standing in for domain concepts needing their own validation/types.
    - **Repeated Switches**: identical `switch`/`if`-cascades on the same type recurring across the change.
    - **Shotgun Surgery**: one logical change forcing scattered edits across many files in the diff.
-   - **Divergent Change**: one file or module edited for multiple unrelated responsibilities.
+   - **Divergent Change**: one file or module edited for multiple unrelated responsibilities (specifically audit domain files growing past >300 LOC that accumulate $\ge 5$ distinct domain responsibilities such as slugification, route formatting, DTO projections, collection filtering, social intents, and layout calculations).
    - **Speculative Generality**: abstractions, parameters, or hooks added for speculative needs not in the spec.
    - **Message Chains**: long navigational walks (`a.b().c().d()`) creating fragile caller coupling.
    - **Middle Man**: class or helper that mostly delegates onward without adding value.

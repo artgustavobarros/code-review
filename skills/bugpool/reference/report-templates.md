@@ -33,6 +33,9 @@ Write to a temp file and post with `scripts/post.sh sticky <pr> <file>` (the scr
 | :--- | :--- | :--- |
 | <SEV> | `<file>:<line>` | <one line> |
 
+### Spec & Architecture Notes (advisory)
+- `<file>:<line>` — [spec/creep | architecture] <scope or smell finding>
+
 ### Actions
 - Auto-fixed: <n> (commit `<sha>` on `<branch>`, pushed: <yes/no>)
 - Bot nits resolved: <n> · Human threads untouched: <n> · Ambiguous for author: <n>
@@ -52,8 +55,11 @@ Write to a temp file and post with `scripts/post.sh sticky <pr> <file>` (the scr
 Pre-pass: lint <…> · typecheck <…> · tests <…> · <ignored: N> · Lenses: <list> · Validation: <c> confirmed (<r> reproduced) / <r> rejected
 Coverage: <lens: skipped files, only for lenses that skipped changed code> · Not verified: <…>
 
-#### Findings (validated, most severe first)
+#### Findings (validated runtime & security, most severe first)
 1. **<SEV>** `<file>:<line>` — <issue> → <fix>   <[reproduced: <path>] | [fixed in <sha>] | [ambiguous] | [partly pre-existing] | [pre-existing]>
+
+#### Spec & Architecture Notes (advisory)
+- `<file>:<line>` — [spec/creep | architecture] <issue and maintainability impact>
 
 #### Not validated (LOW/NIT, max 5; <n> dropped)
 - `<file>:<line>` — <issue>

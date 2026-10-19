@@ -7,7 +7,7 @@ description: >
   optional auto-fix in an isolated worktree. Supports PR mode, --local (no PR needed) and
   --dry-run (no GitHub or git writes). Use for /bugpool, PR review, review triage, or
   reviewing a branch before opening a PR.
-version: "3.2.0"
+version: "3.3.0"
 argument-hint: "[pr-number|pr-url] [--local] [--base <ref>] [--dry-run] [--push] [--no-ignore] [--quick] [--spec <ref>]"
 ---
 
@@ -95,7 +95,7 @@ Each lens writes `STRUCTURED_FINDINGS` and `COVERAGE` to its output file and rep
 
 1. Parse all `STRUCTURED_FINDINGS` and `COVERAGE` blocks from the lens files. Merge findings with the same file, line within ±3, and the same defect; keep the highest severity, prefer category `bug`, and list contributing lenses. Give each an id (F1, F2, …).
 2. To validate: every MEDIUM+ finding and every LOW finding of category `bug`.
-3. Other LOW/NIT: keep at most 5, not validated, chosen in this order: `bug` > consistency > missing-test > weak-assertion > other (then higher severity first). Count the rest as dropped.
+3. Other LOW/NIT: keep at most 5, not validated, chosen in this order: `bug` > `spec/divergence` > `spec/creep` > `architecture` > consistency > missing-test > weak-assertion > other (then higher severity first). Count the rest as dropped.
 4. In **one message**, spawn validators reading `<skill>/reference/lenses/validator.md`, passing `$RUN` and the Router's DANGER:
    - each `security` finding rated CRITICAL/HIGH → its own Agent with `model: opus`;
    - all other findings to validate → batches of up to 8 per Agent with `model: sonnet`.

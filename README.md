@@ -31,7 +31,7 @@ npx skills add artgustavobarros/skills --list
 ## 📦 Skills Disponíveis
 
 ### 1. [`bugpool`](./skills/bugpool/SKILL.md) — Revisão de PR multi-lente com triagem segura
-> **Comando:** `/bugpool [pr-number|pr-url] [--local] [--base <ref>] [--dry-run] [--push] [--no-ignore] [--quick] [--spec <ref>]` | **Versão:** `3.2.0`
+> **Comando:** `/bugpool [pr-number|pr-url] [--local] [--base <ref>] [--dry-run] [--push] [--no-ignore] [--quick] [--spec <ref>]` | **Versão:** `3.3.0`
 
 Revisa um Pull Request (ou a sua branch antes de abrir o PR), valida cada achado antes de reportar, tria threads de bots sem nunca tocar em conversas humanas e, opcionalmente, corrige o que é claro num worktree isolado.
 
@@ -60,6 +60,13 @@ Comparado ao `/code-review` padrão do Claude Code, nos mesmos cenários (uma ex
 | limpo (falsos positivos) | 2 | 0 |
 
 Acha mais (13/15 contra 11/15) e erra menos, a ~8,5x o custo e ~6x o tempo (no modo completo). Use `--quick` para custo e tempo equivalentes ao `/code-review`.
+
+#### 3.3.0
+- **Diff-Inversion (Auditoria Reversa de Spec)**: Inspeciona novas rotas HTTP, server actions e exports públicos sem requisito na especificação, reportando `spec/creep` com severidade MEDIUM.
+- **Simulação Dinâmica de Ciclo de Vida de UI**: Simula interações de reset/clear/dismiss em componentes interativos para flagrar avisos ou contadores que retêm estado ou props iniciais desatualizados.
+- **Métricas Objetivas de Arquitetura**: Heurísticas numéricas para *Divergent Change* (>300 LOC e $\ge 5$ responsabilidades de domínio) e *Feature Envy* em JSX.
+- **Prioridade de Deduplicação**: Preservação de achados `spec/divergence`, `spec/creep` e `architecture` antes de descarte no limite de LOWs.
+- **Relatório com Seção Consultiva**: Separação clara entre achados que deduzem score (Corretude e Segurança) e notas consultivas de especificação e arquitetura.
 
 #### 3.2.0
 - **Lente Spec**: Descoberta automática de especificações (`--spec`, issues de PR, arquivos locais) e auditoria de requisitos ausentes (`spec/missing`), divergências (`spec/divergence`) e escopo extra (`spec/creep`).
