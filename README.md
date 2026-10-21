@@ -4,6 +4,13 @@ Repositório público com habilidades especializadas para agentes de codificaç�
 
 Compatível nativamente com o padrão aberto do **[skills.sh](https://skills.sh/)** e o CLI `npx skills`.
 
+## 🗂️ Estrutura
+
+| Pasta | Conteúdo | Instalar |
+| :--- | :--- | :--- |
+| [`code-review/`](./code-review/SKILL.md) | Skill autoral de revisão de PR | `npx skills add artgustavobarros/skills --skill code-review` |
+| [`frontend/`](./frontend/README.md) | Kit fixo de skills de terceiros para frontend | `./frontend/install.sh /caminho/do/projeto` |
+
 ---
 
 ## 🚀 Como Instalar com `npx skills` (Padrão Oficial)
@@ -12,25 +19,25 @@ Você pode instalar qualquer skill diretamente em qualquer projeto com um único
 
 ### Instalar no projeto atual:
 ```bash
-npx skills add artgustavobarros/code-review --skill code-review
+npx skills add artgustavobarros/skills --skill code-review
 ```
-*(Ou pelo link completo: `npx skills add https://github.com/artgustavobarros/code-review --skill code-review`)*
+*(Ou pelo link completo: `npx skills add https://github.com/artgustavobarros/skills --skill code-review`)*
 
 ### Instalar globalmente na sua máquina (disponível em todos os projetos):
 ```bash
-npx skills add artgustavobarros/code-review --skill code-review -g
+npx skills add artgustavobarros/skills --skill code-review -g
 ```
 
 ### Listar todas as skills disponíveis neste repositório:
 ```bash
-npx skills add artgustavobarros/code-review --list
+npx skills add artgustavobarros/skills --list
 ```
 
 ---
 
 ## 📦 Skills Disponíveis
 
-### 1. [`code-review`](./skills/code-review/SKILL.md) — Revisão de PR multi-lente com triagem segura
+### 1. [`code-review`](./code-review/SKILL.md) — Revisão de PR multi-lente com triagem segura
 > **Comando:** `/code-review [pr-number|pr-url] [--local] [--base <ref>] [--dry-run] [--push] [--no-ignore] [--quick] [--spec <ref>]` | **Versão:** `3.4.0`
 
 Revisa um Pull Request (ou a sua branch antes de abrir o PR), valida cada achado antes de reportar, tria threads de bots sem nunca tocar em conversas humanas e, opcionalmente, corrige o que é claro num worktree isolado.
@@ -92,6 +99,16 @@ Acha mais (13/15 contra 11/15) e erra menos, a ~8,5x o custo e ~6x o tempo (no m
 
 ---
 
+## 🎨 Kit Frontend
+
+Conjunto fixo de skills de terceiros para projetos frontend (design, React, testes de UI), na pasta [`frontend/`](./frontend/README.md):
+
+```bash
+./frontend/install.sh /caminho/para/seu/projeto
+```
+
+---
+
 ## 🛠️ Métodos Alternativos de Instalação
 
 ### Via script instalador local:
@@ -101,7 +118,7 @@ Acha mais (13/15 contra 11/15) e erra menos, a ~8,5x o custo e ~6x o tempo (no m
 
 ### Cópia manual:
 ```bash
-cp -r skills/code-review /caminho/para/projeto/.agents/skills/
+cp -r code-review /caminho/para/projeto/.agents/skills/
 ln -s ../../.agents/skills/code-review /caminho/para/projeto/.claude/skills/code-review
 ```
 

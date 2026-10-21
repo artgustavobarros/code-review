@@ -20,7 +20,7 @@ mkdir -p "$TARGET_DIR/.agents/skills" "$TARGET_DIR/.claude/skills"
 echo "  -> Instalando code-review..."
 rm -rf "$TARGET_DIR/.agents/skills/bugpool" "$TARGET_DIR/.claude/skills/bugpool"
 rm -rf "$TARGET_DIR/.agents/skills/code-review"
-cp -r "$SOURCE_DIR/skills/code-review" "$TARGET_DIR/.agents/skills/"
+cp -r "$SOURCE_DIR/code-review" "$TARGET_DIR/.agents/skills/"
 CLAUDE_LINK="$TARGET_DIR/.claude/skills/code-review"
 if [ -d "$CLAUDE_LINK" ] && [ ! -L "$CLAUDE_LINK" ]; then
   rm -rf "$CLAUDE_LINK"
