@@ -10,6 +10,7 @@ Compatível nativamente com o padrão aberto do **[skills.sh](https://skills.sh/
 | :--- | :--- | :--- |
 | [`code-review/`](./code-review/SKILL.md) | Skill autoral de revisão de PR | `npx skills add artgustavobarros/skills --skill code-review` |
 | [`frontend/`](./frontend/README.md) | Kit fixo de skills de terceiros para frontend | `./frontend/install.sh /caminho/do/projeto` |
+| [`backend/`](./backend/README.md) | Kit fixo de skills de terceiros para backend | `./backend/install.sh /caminho/do/projeto` |
 
 ---
 
